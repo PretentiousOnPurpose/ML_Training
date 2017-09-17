@@ -36,11 +36,20 @@ xts = sc.transform(xts)
 ytr = scy.fit_transform(np.array(ytr).reshape((-1 , 1)))
 yts = scy.transform(np.array(yts).reshape((-1 , 1)))
 
+#------Low Accuray Code-------
+#ANN = Sequential()
+#ANN.add(Dense(units=3 , kernel_initializer='normal' , activation='linear' , input_dim=6)) #Hidden Layer
+#ANN.add(Dense(units=1 , kernel_initializer='normal' , activation='linear')) #Output Layer
+#ANN.compile(optimizer='sgd' , loss='mean_squared_error' , metrics=['accuracy'])
+#ANN.fit(xtr , ytr , batch_size=35 , epochs=101)
+#---------END LAC------------
+
+#---------High Accuracy---------------
 ANN = Sequential()
-ANN.add(Dense(units=3 , kernel_initializer='normal' , activation='relu' , input_dim=6))
-ANN.add(Dense(units=3 , kernel_initializer='normal' , activation='linear'))
-ANN.add(Dense(units=3 , kernel_initializer='normal' , activation='linear'))
-ANN.add(Dense(units=1 , kernel_initializer='normal' , activation='linear'))
+ANN.add(Dense(units=3 , kernel_initializer='normal' , activation='relu' , input_dim=6)) # First HL
+ANN.add(Dense(units=3 , kernel_initializer='normal' , activation='linear')) #HL
+ANN.add(Dense(units=3 , kernel_initializer='normal' , activation='linear')) #HL
+ANN.add(Dense(units=1 , kernel_initializer='normal' , activation='linear')) # Output Layer
 ANN.compile(optimizer='sgd' , loss='mean_squared_error' , metrics=['accuracy'])
 ANN.fit(xtr , ytr , batch_size=35 , epochs=101)
 
