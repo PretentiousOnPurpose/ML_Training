@@ -1,3 +1,5 @@
+import numpy as np
+from keras.preprocessing import image
 from keras.models import Sequential
 from keras.layers import Conv2D
 from keras.layers import MaxPooling2D
@@ -30,6 +32,7 @@ classifier.add(Dense(units = 1, activation = 'sigmoid'))
 
 classifier.compile(optimizer = 'adam', loss = 'binary_crossentropy', metrics = ['accuracy'])
 
+# For Image Augmentation
 from keras.preprocessing.image import ImageDataGenerator
 
 train_datagen = ImageDataGenerator(rescale = 1./255,
@@ -48,7 +51,7 @@ test_set = test_datagen.flow_from_directory('./dataset/test_set',
                                             target_size = (64, 64),
                                             batch_size = 32,
                                             class_mode = 'binary')
-
+# End - Image Augmentation
 classifier.fit_generator(training_set,
                          steps_per_epoch = 8000/25,
                          epochs = 100,
@@ -57,7 +60,6 @@ classifier.fit_generator(training_set,
 
 
 def Predict(filename):
-    from keras.preprocessing import image
     load_test = image.load_img(filename ,target_size=(64 ,64))
     load_test = image.img_to_array(load_test)
     load_test = np.expand_dims(load_test,0)
@@ -65,10 +67,10 @@ def Predict(filename):
         print("Cat")
     else:
         print("Dog")
-import numpy as np
 
 Predict("cat.4944.jpg")
-
+ 
+# Save the model for further use.
 def Load_Model2JSON(model):
     model_json = model.to_json()
     with open("model2.json", "w") as json_file:
@@ -78,6 +80,7 @@ def Load_Model2JSON(model):
 
 Load_Model2JSON(classifier)
 
+# Loading model from json file.
 def Load_ModelFJSON():
     from keras.models import model_from_json
     json_file = open('model2.json', 'r')
