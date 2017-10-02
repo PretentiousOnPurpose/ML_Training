@@ -21,23 +21,25 @@ def Spike(activation, Act_Pot):
         return 1/(1 + np.exp(-Act_Pot))
     
 def Sequential():
-    def __init__(self):
+    def __init__(self, inputs_dim):
         self.layers = []
+        layers.append(Layer(inputs_dim, 'linear' , 0))
         self.layerID = 0
         
+    
     def Add(self, units ,activation):
         self.layerID += 1
         self.layers.append(Layer(units ,activation, self.layerID))
         
     def access_layer(self, layerID):
-        return self.layers[layerID - 1]
+        return self.layers[layerID]
     
     def Output(self):
-        
+        pass
         
     def Compute()
-            
-        
+        pass
+    
 def Layer():
 
     def access_layer(self, layerID):
