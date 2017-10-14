@@ -35,17 +35,29 @@ func (N *Neuron) Compile_RELU() {
 type Layer struct {
 	Units int
 	Neurons []*Neuron
-	Input_Dims int
 }
 
-func (L *Layer) Input_Neurons() []*Neuron {
-	return L.Neurons[:L.Input_Dims]
+type Sequential struct {
+	Layers []Layer
 }
 
-func (L *Layer) Output_Neuron() []*Neuron {
-	return L.Neurons[L.Units-1]
+func (Seq *Sequential) Add_Layer(Units int) {
+	Seq.Layers = append(Seq.Layers, Layer{Units , make([]*Neuron , Units)})
 }
 
+func (Seq *Sequential) Compile() {
+	for i := 1; i < len(Seq.Layers)-1; i++ {
+		NIP := Seq.Layers[i].Neurons
+		NOP := Seq.Layers[i+1].Neurons
+		for j := 0; j < len(NOP); i++ {
+			arr := []float64{}
+			for i := 0; i < len(NIP); i++ {
+				arr = append(arr, NIP[i].Output)
+			}
+			NOP[j].Input = arr
+		}
+	}
+}
 
 func MatMul(X, Y []float64) float64 {
 	Prod := 0.0
@@ -103,14 +115,10 @@ var X = Linspace(1, 100, 1)
 var Y =	MatAddScale(4 , MatMulScale(2, X))
 
 func main() {
-	N1 := Neuron{[]float64{0}, 0.0, []float64{0.76}, "RELU", 0}
-	N2 := Neuron{[]float64{0}, 0.0, []float64{0.35}, "RELU", 0}
-	N3 := Neuron{[]float64{N1.Output,N2.Output}, 0.0, []float64{0.45,-0.12}, "Linear", 0}
-	Train_Network([]*Neuron{&N1, &N2 , &N3}, X, Y , 100)
-	fmt.Println("N1: ", N1.Weights)
-	fmt.Println("N2: ", N2.Weights)
-	fmt.Println("N3: ", N3.Weights)
-	fmt.Println(X)
+	Seq := Sequential{[]Layer{}}
+	Seq.Add_Layer(2)
+	Seq.Add_Layer(1)
+	Seq.Compile()
 }
 
 func Train_Network(Layer []*Neuron , X , Y []float64, Steps int) {
