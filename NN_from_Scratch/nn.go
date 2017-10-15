@@ -5,6 +5,8 @@ import (
 	"os"
 	"math/rand"
 	"fmt"
+	"reflect"
+	"database/sql"
 )
 
 type Neuron struct {
@@ -15,12 +17,7 @@ type Neuron struct {
 	Bias float64
 }
 func (N *Neuron) Compile_Linear() {
-	op := MatMul(N.Input , N.Weights) + N.Bias
-	if op >= 1 {
-		N.Output = 1
-	} else {
-		N.Output = 0
-	}
+	return MatMul(N.Input , N.Weights) + N.Bias
 }
 
 func (N *Neuron) Compile_RELU() {
@@ -56,6 +53,31 @@ func (Seq *Sequential) Compile() {
 			}
 			NOP[j].Input = arr
 		}
+	}
+}
+func (Seq * Sequential) BackPropagate(Error , Learning_Rate float64) {
+		
+}
+
+func (Seq *Sequential) Train(X, Y []float64, Steps int) {
+	Layers := Seq.Layers
+	for i := 0; i < len(X); i++ {
+		Input_Layer := Layers[0]
+		for j:= 0; i < len(Input_Layer.Neurons); j++ {
+			Input_Layer.Neurons[j].Input = X[i]
+		}
+		for k := 1; k < len(Layers); k++ {
+			NN := Layers[k].Neurons
+			for n := 0; n < len(NN); n++ {
+				if NN[n].ActFn == "linear" {
+					NN[n].Compile_Linear()
+				} else {
+					NN[n].Compile_RELU()
+				}
+			}
+		}
+		Error := Y[i] - Seq.Layers[len(Seq.Layers) - 1].Neurons[0].Output
+		BackPropagate(Error , 0.005)
 	}
 }
 
@@ -119,27 +141,5 @@ func main() {
 	Seq.Add_Layer(2)
 	Seq.Add_Layer(1)
 	Seq.Compile()
-}
-
-func Train_Network(Layer []*Neuron , X , Y []float64, Steps int) {
-	for i := 0; i < Steps; i++ {
-		for n := 0; n < len(Layer); n++ {
-			if n <= 1 {
-				Layer[n].Input = []float64{X[i]}
-			}
-			if n == 2 {
-				Layer[n].Compile_Linear()
-			} else {
-				Layer[n].Compile_RELU()
-			}
-		}
-		Error := Y[i] - Layer[2].Output
-		BackPropagate(Error , 0.005, Layer)
-	}
-}
-
-func BackPropagate(Error float64, learning_rate float64, Layer []*Neuron) {
-	for i := 0; i < len(Layer); i++ {
-		Layer[i].Weights = MatAdd(Layer[i].Weights ,MatMulScale(learning_rate, MatMulScale(Error , Layer[i].Input)))
-	}
+	Seq.Train(X, Y, 100)
 }
