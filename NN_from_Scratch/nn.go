@@ -5,8 +5,6 @@ import (
 	"os"
 	"math/rand"
 	"fmt"
-	"reflect"
-	"database/sql"
 )
 
 type Neuron struct {
@@ -17,7 +15,7 @@ type Neuron struct {
 	Bias float64
 }
 func (N *Neuron) Compile_Linear() {
-	return MatMul(N.Input , N.Weights) + N.Bias
+	N.Output = MatMul(N.Input , N.Weights) + N.Bias
 }
 
 func (N *Neuron) Compile_RELU() {
@@ -38,33 +36,49 @@ type Sequential struct {
 	Layers []Layer
 }
 
-func (Seq *Sequential) Add_Layer(Units int) {
-	Seq.Layers = append(Seq.Layers, Layer{Units , make([]*Neuron , Units)})
+func (Seq *Sequential) Add_Layer(Input_dims , Units int , ActFn string) {
+	NN := make([]*Neuron , Units)
+	for n := 0; n < Units; n++ {
+		NN[n] = &Neuron{make([]float64, Input_dims), 0.0 , []float64{}, ActFn, 0}
+	}
+	Seq.Layers = append(Seq.Layers, Layer{Units , NN})
 }
 
 func (Seq *Sequential) Compile() {
+	rand.Seed(101)
 	for i := 1; i < len(Seq.Layers)-1; i++ {
 		NIP := Seq.Layers[i].Neurons
 		NOP := Seq.Layers[i+1].Neurons
 		for j := 0; j < len(NOP); i++ {
 			arr := []float64{}
+			wArr := []float64{}
 			for i := 0; i < len(NIP); i++ {
 				arr = append(arr, NIP[i].Output)
+				wArr = append(wArr, rand.Float64())
 			}
 			NOP[j].Input = arr
+			NOP[j].Input = wArr
 		}
 	}
 }
 func (Seq * Sequential) BackPropagate(Error , Learning_Rate float64) {
-		
+	Layers := Seq.Layers
+	for i := 0; i < len(Layers);i++ {
+		NN := Layers[i].Neurons
+		for n := 0; n < len(NN); i++ {
+			NN[n].Weights = MatAdd(NN[n].Weights, MatMulScale(Error , MatMulScale(Learning_Rate ,NN[n].Input)))
+		}
+	}
 }
 
 func (Seq *Sequential) Train(X, Y []float64, Steps int) {
+	rand.Seed(202)
 	Layers := Seq.Layers
 	for i := 0; i < len(X); i++ {
 		Input_Layer := Layers[0]
 		for j:= 0; i < len(Input_Layer.Neurons); j++ {
-			Input_Layer.Neurons[j].Input = X[i]
+			Input_Layer.Neurons[j].Input = []float64{X[i]}
+			Input_Layer.Neurons[j].Weights = []float64{rand.Float64()}
 		}
 		for k := 1; k < len(Layers); k++ {
 			NN := Layers[k].Neurons
@@ -77,10 +91,45 @@ func (Seq *Sequential) Train(X, Y []float64, Steps int) {
 			}
 		}
 		Error := Y[i] - Seq.Layers[len(Seq.Layers) - 1].Neurons[0].Output
-		BackPropagate(Error , 0.005)
+		Seq.BackPropagate(Error , 0.005)
 	}
 }
 
+func (Seq *Sequential) Predict(X float64) float64 {
+	Layers := Seq.Layers
+	NN := Layers[0].Neurons
+	for i := 0; i < len(NN); i++ {
+		NN[i].Input = []float64{X}
+	}
+	for i := 0; i < len(Layers); i++ {
+		NN := Layers[i].Neurons
+		for n := 0; n < len(NN); n++ {
+			if NN[n].ActFn == "linear" {
+				NN[n].Compile_Linear()
+			} else {
+				NN[n].Compile_RELU()
+			}
+		}
+	}
+	return Layers[len(Layers) - 1].Neurons[0].Output
+}
+
+var X = Linspace(1, 100, 1)
+// Y = M*X + C
+var Y =	MatAddScale(4 , MatMulScale(2, X))
+
+func main() {
+	Seq := Sequential{[]Layer{}}
+	Seq.Add_Layer(1, 2 , "relu")
+	Seq.Add_Layer(2, 1 , "linear")
+	fmt.Println(Seq.Layers[0].Neurons[0].Input)
+	//Seq.Compile()
+	//Seq.Train(X, Y, 100)
+	//res := Seq.Predict(35.5)
+	//fmt.Println(res)
+}
+
+// Numpy Stuff coded from scratch (Not in a General form though)
 func MatMul(X, Y []float64) float64 {
 	Prod := 0.0
 	if len(X) != len(Y) {
@@ -130,16 +179,4 @@ func Linspace(Low , High , Distance float64) []float64 {
 		i += Distance
 	}
 	return arr
-}
-
-var X = Linspace(1, 100, 1)
-// Y = M*X + C
-var Y =	MatAddScale(4 , MatMulScale(2, X))
-
-func main() {
-	Seq := Sequential{[]Layer{}}
-	Seq.Add_Layer(2)
-	Seq.Add_Layer(1)
-	Seq.Compile()
-	Seq.Train(X, Y, 100)
 }
