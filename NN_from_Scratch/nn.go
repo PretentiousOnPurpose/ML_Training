@@ -4,8 +4,11 @@ import (
 	"log"
 	"os"
 	"math/rand"
-	"fmt"
+	"time"
+	"strconv"
 )
+
+var GlobalRandSeed int64 = 101
 
 type Neuron struct {
 	Input []float64
@@ -45,7 +48,6 @@ func (Seq *Sequential) Add_Layer(Input_dims , Units int , ActFn string) {
 }
 
 func (Seq *Sequential) Compile() {
-	rand.Seed(101)
 	for i := 1; i < len(Seq.Layers)-1; i++ {
 		NIP := Seq.Layers[i].Neurons
 		NOP := Seq.Layers[i+1].Neurons
@@ -54,12 +56,26 @@ func (Seq *Sequential) Compile() {
 			wArr := []float64{}
 			for i := 0; i < len(NIP); i++ {
 				arr = append(arr, NIP[i].Output)
+				Seeder()
 				wArr = append(wArr, rand.Float64())
 			}
 			NOP[j].Input = arr
 			NOP[j].Input = wArr
 		}
 	}
+//	For Output Layer
+	Layers := Seq.Layers
+	NIP := Layers[len(Layers)-2].Neurons
+	NOP := Layers[len(Layers)-1].Neurons
+	arr := []float64{}
+	wArr := []float64{}
+	for i := 0; i < len(NIP); i++ {
+		arr = append(arr, NIP[i].Output)
+		Seeder()
+		wArr = append(wArr, rand.Float64())
+	}
+	NOP[0].Input = arr
+	NOP[0].Weights = wArr
 }
 func (Seq * Sequential) BackPropagate(Error , Learning_Rate float64) {
 	Layers := Seq.Layers
@@ -72,12 +88,12 @@ func (Seq * Sequential) BackPropagate(Error , Learning_Rate float64) {
 }
 
 func (Seq *Sequential) Train(X, Y []float64, Steps int) {
-	rand.Seed(202)
 	Layers := Seq.Layers
 	for i := 0; i < len(X); i++ {
 		Input_Layer := Layers[0]
-		for j:= 0; i < len(Input_Layer.Neurons); j++ {
+		for j:= 0; j < len(Input_Layer.Neurons); j++ {
 			Input_Layer.Neurons[j].Input = []float64{X[i]}
+			Seeder()
 			Input_Layer.Neurons[j].Weights = []float64{rand.Float64()}
 		}
 		for k := 1; k < len(Layers); k++ {
@@ -112,21 +128,6 @@ func (Seq *Sequential) Predict(X float64) float64 {
 		}
 	}
 	return Layers[len(Layers) - 1].Neurons[0].Output
-}
-
-var X = Linspace(1, 100, 1)
-// Y = M*X + C
-var Y =	MatAddScale(4 , MatMulScale(2, X))
-
-func main() {
-	Seq := Sequential{[]Layer{}}
-	Seq.Add_Layer(1, 2 , "relu")
-	Seq.Add_Layer(2, 1 , "linear")
-	fmt.Println(Seq.Layers[0].Neurons[0].Input)
-	//Seq.Compile()
-	//Seq.Train(X, Y, 100)
-	//res := Seq.Predict(35.5)
-	//fmt.Println(res)
 }
 
 // Numpy Stuff coded from scratch (Not in a General form though)
@@ -179,4 +180,25 @@ func Linspace(Low , High , Distance float64) []float64 {
 		i += Distance
 	}
 	return arr
+}
+
+func Seeder() {
+	seed_val, _ := strconv.Atoi(time.Now().Format(".000")[1:])
+	rand.Seed(int64(seed_val)*GlobalRandSeed)
+	GlobalRandSeed += 120
+}
+
+
+var X = Linspace(1, 100, 1)
+// Y = M*X + C
+var Y =	MatAddScale(4 , MatMulScale(2, X)) //M = 2 and B = 4
+
+func main() {
+	Seq := Sequential{[]Layer{}}
+	Seq.Add_Layer(1, 2 , "relu")
+	Seq.Add_Layer(2, 1 , "linear")
+	Seq.Compile()
+	Seq.Train(X, Y , 100) // Problem is Here 
+	//res := Seq.Predict(35.5)
+	//fmt.Println(res)
 }
