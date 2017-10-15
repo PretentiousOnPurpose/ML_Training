@@ -130,6 +130,44 @@ func (Seq *Sequential) Predict(X float64) float64 {
 	return Layers[len(Layers) - 1].Neurons[0].Output
 }
 
+//MinMaxScaler from sklearn
+
+type Scaler struct {
+	Arr []float64
+}
+
+func (sc *Scaler) MinMax() (float64, float64){
+	Min := sc.Arr[0]; Max := 0
+	for i := 0; i < len(sc.Arr); i++ {
+		if sc.Arr[i] < Min {
+			Min = sc.Arr[i]
+		}
+		if sc.Arr[i] > Max {
+			Max = sc.Arr[i]
+		}
+	}
+	return Min , Max
+}
+
+func (sc *Scaler) Normalize() []float64 {
+	arr := make([]float64 , len(sc.Arr))
+	Min , Max := sc.MinMax()
+	Range := Max-Min
+	for i := 0; i < len(sc.Arr); i++ {
+		arr[i] = (sc.Arr[i] - Min)/Range
+	}
+	return arr
+}
+func (sc *Scaler) NormPred(X float64) float64 {
+	Min , Max := sc.MinMax()
+	return (X - Min)/(Max - Min)
+}
+
+func (sc *Scaler) InverseNormPred(X float64) float64 {
+	Min , Max := sc.MinMax()
+	return (X*(Max-Min)) + Min
+}
+
 // Numpy Stuff coded from scratch (Not in a General form though)
 func MatMul(X, Y []float64) float64 {
 	Prod := 0.0
@@ -188,17 +226,20 @@ func Seeder() {
 	GlobalRandSeed += 120
 }
 
-
 var X = Linspace(1, 100, 1)
 // Y = M*X + C
 var Y =	MatAddScale(4 , MatMulScale(2, X)) //M = 2 and B = 4
 
 func main() {
+	scX := Scaler{X}
+	x := scX.Normalize()
+	scY := Scaler{Y}
+	y := scY.Normalize()
 	Seq := Sequential{[]Layer{}}
 	Seq.Add_Layer(1, 2 , "relu")
 	Seq.Add_Layer(2, 1 , "linear")
 	Seq.Compile()
-	Seq.Train(X, Y , 100) // Problem is Here 
+	Seq.Train(x, y , 100) // Problem is Here
 	//res := Seq.Predict(35.5)
 	//fmt.Println(res)
 }
