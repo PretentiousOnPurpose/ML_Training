@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from commpy.modulation import PSKModem, QAMModem
 
 M = 16
-modem = QAMModem(M)
+modem = PSKModem(M)
 
 class modNet(nn.Module):
     def __init__(self):
@@ -46,7 +46,7 @@ dec = demodNet()
 
 opt = optim.Adam(list(enc.parameters()) + list(dec.parameters()), lr=0.01)
 
-SNRs = np.linspace(5, 10, 5)
+SNRs = np.linspace(15, 20, 5)
 
 test_ser_m = np.zeros(len(SNRs))
 test_ser_b = np.zeros(len(SNRs))
